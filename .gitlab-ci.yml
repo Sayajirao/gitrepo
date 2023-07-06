@@ -1,0 +1,14 @@
+stages:
+  - deploy
+
+deploy:
+  stage: deploy
+  image: ubuntu:latest
+  script:
+    - apt-get update -y
+    - apt-get install -y openssh-server
+    - service ssh start
+    - echo "SSH server is running"
+    - ls -la
+  only:
+    - master
