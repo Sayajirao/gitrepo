@@ -1,14 +1,73 @@
-stages:
-  - deploy
+# stages:
+#   - deploy
 
-deploy:
-  stage: deploy
-  image: ubuntu:latest
-  script:
-    - apt-get update -y
-    - apt-get install -y openssh-server
-    - service ssh start
-    - echo "SSH server is running"
-    - ls -la
-  only:
-    - master
+# deploy:
+#   stage: deploy
+#   image: ubuntu:latest
+#   script:
+#     - apt-get update -y
+#     - apt-get install -y openssh-server
+#     - service ssh start
+#     - echo "SSH server is running"
+#     - ls -la
+#   only:
+#     - master
+
+###########################################################################
+
+name: Terraform CI/CD
+
+on:
+ push:
+    branches:
+      - main
+
+jobs:
+ plan-apply:
+    runs-on: ubuntu-latest
+    container:
+      image: docker.mirror.hashicorp.services/hashicorp/terraform:light
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Terraform Init & Plan
+        run: |
+          terraform init -input=false
+          terraform plan
+
+ apply:
+    needs: plan-apply
+    runs-on: ubuntu-latest
+    container:
+      image: docker.mirror.hashicorp.services/hashicorp/terraform:light
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
+
+ plan-destroy:
+    needs: apply
+    runs-on: ubuntu-latest
+    container:
+      image: docker.mirror.hashicorp.services/hashicorp/terraform:light
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Terraform Plan Destroy
+        run: terraform plan -destroy
+
+ destroy:
+    needs: plan-destroy
+    runs-on: ubuntu-latest
+    container:
+      image: docker.mirror.hashicorp.services/hashicorp/terraform:light
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Terraform Destroy
+        run: terraform apply -auto-approve
